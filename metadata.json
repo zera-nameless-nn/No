@@ -1,0 +1,5 @@
+{
+  "name": "Nameless Protector",
+  "description": "A Lua script protection simulation with a fake 403 entry, secret login, and user-agent based content serving.",
+  "requestFramePermissions": []
+}
