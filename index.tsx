@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
+import App from './Main'; // Fixed bcz App.tsx its removed and need rename to Main.tsx
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
