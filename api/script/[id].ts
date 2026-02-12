@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { scriptStore } from '../_store';
+import { Buffer } from 'buffer';
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
   try {
@@ -9,21 +9,31 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).send('Invalid ID');
     }
 
-    const content = scriptStore.get(id);
+    let content = '';
+    const idStr = id as string;
 
-    if (!content) {
-      return res.status(404).send('Script not found or expired (Serverless memory reset).');
+    // Decode logic
+    if (idStr.includes('~')) {
+      const parts = idStr.split('~');
+      if (parts.length >= 2) {
+        content = Buffer.from(parts[1], 'base64url').toString('utf-8');
+      }
+    } else {
+      try {
+        content = Buffer.from(idStr, 'base64url').toString('utf-8');
+      } catch (e) {
+        content = "-- Error decoding script";
+      }
     }
 
-    // QUAN TRỌNG: Sử dụng text/plain để đảm bảo nội dung là văn bản thô tuyệt đối
+    if (!content) {
+      return res.status(404).send('Script not found.');
+    }
+
+    // Response headers for raw text
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    
-    // Header này giúp trình duyệt hiểu rằng nếu tải về thì hãy đặt tên là {id}.txt
-    // "inline" giúp nội dung vẫn hiển thị trên trình duyệt thay vì bị ép tải xuống ngay lập tức
-    res.setHeader('Content-Disposition', `inline; filename="${id}.txt"`);
-    
-    // Không lưu cache để đảm bảo script luôn mới nhất
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Content-Disposition', `inline; filename="script.lua"`);
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     
     return res.status(200).send(content);
   } catch (error) {
